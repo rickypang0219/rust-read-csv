@@ -1,12 +1,12 @@
 import csv
 
 
-open_prices: list[float] = []
-high_prices: list[float] = []
-low_prices: list[float] = []
-close_prices: list[float] = []
+open_prices = []
+high_prices = []
+low_prices = []
+close_prices = []
 
-with open("PI_1H.csv", "r") as csvfile:
+with open("test.csv", "r") as csvfile:
     reader = csv.reader(csvfile)
     next(reader)
     for row in reader:
@@ -16,5 +16,5 @@ with open("PI_1H.csv", "r") as csvfile:
         close_prices.append(float(row[4]))
 
 
-for price in open_prices:
-    print(price)
+# for price in open_prices:
+#     print(price)

@@ -24,14 +24,14 @@ fn read_csv(file_path: &str) -> Result<(Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>),
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let result = read_csv("PI_1H.csv")?;
+    let result = read_csv("test.csv")?;
     let open_prices: Vec<f64> = result.0;
     let high_prices: Vec<f64> = result.1;
     let low_prices: Vec<f64> = result.2;
     let close_prices: Vec<f64> = result.3;
 
-    for price in open_prices {
-        println!("{}", price);
-    }
+    // for price in open_prices {
+    //     println!("{}", price);
+    // }
     Ok(())
 }
