@@ -27,14 +27,14 @@ fn read_csv(file_path: &str) -> Result<(Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>),
 }
 
 fn strategy(
-    pi_open: Vec<f64>,
-    pi_high: Vec<f64>,
-    pi_low: Vec<f64>,
-    _pi_close: Vec<f64>,
-    btc_open: Vec<f64>,
-    _btc_high: Vec<f64>,
-    _btc_low: Vec<f64>,
-    btc_close: Vec<f64>,
+    pi_open: &Vec<f64>,
+    pi_high: &Vec<f64>,
+    pi_low: &Vec<f64>,
+    _pi_close: &Vec<f64>,
+    btc_open: &Vec<f64>,
+    _btc_high: &Vec<f64>,
+    _btc_low: &Vec<f64>,
+    btc_close: &Vec<f64>,
     window_size: usize,
     bb_multiplier: f64,
 ) -> Vec<f64> {
@@ -60,8 +60,7 @@ fn strategy(
         .map(|(&a, &b)| (a + b) / 2.0)
         .collect();
 
-    println!("{}", (pi_higher.len()));
-    for i in 2..(pi_open.len() - 1) {
+    for i in 2..(pi_open.len()) {
         if (pi_high[i - 2] < pi_higher[i - 2])
             && (pi_high[i - 1] > pi_higher[i - 1])
             && (btc_position[i - 1] == 0)
@@ -91,9 +90,9 @@ fn strategy(
             btc_position[i] = 0;
         };
         // Signal with exit
-        if (btc_entry_signal[i] == -1) {
+        if btc_entry_signal[i] == -1 {
             btc_signal_with_exits[i] = btc_entry_signal[i];
-        } else if (btc_entry_signal[i] == 1) {
+        } else if btc_entry_signal[i] == 1 {
             btc_signal_with_exits[i] = btc_entry_signal[i];
         } else if (btc_entry_signal[i] == 0)
             && (btc_position[i - 1] == -1)
@@ -125,11 +124,11 @@ fn strategy(
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let result = read_csv("PI_1H.csv")?;
-    let pi_open: Vec<f64> = result.0;
-    let pi_high: Vec<f64> = result.1;
-    let pi_low: Vec<f64> = result.2;
-    let pi_close: Vec<f64> = result.3;
+    let pi_data = read_csv("PI_1H.csv")?;
+    let pi_open: Vec<f64> = pi_data.0;
+    let pi_high: Vec<f64> = pi_data.1;
+    let pi_low: Vec<f64> = pi_data.2;
+    let pi_close: Vec<f64> = pi_data.3;
 
     let btc_data = read_csv("BTC_price_1H.csv")?;
     let btc_open: Vec<f64> = btc_data.0;
@@ -146,18 +145,25 @@ fn main() -> Result<(), Box<dyn Error>> {
     let bb_multiplier: f64 = 2.0;
 
     let btc_pnl: Vec<f64> = strategy(
-        pi_open,
-        pi_high,
-        pi_low,
-        pi_close,
-        btc_open,
-        btc_high,
-        btc_low,
-        btc_close,
+        &pi_open,
+        &pi_high,
+        &pi_low,
+        &pi_close,
+        &btc_open,
+        &btc_high,
+        &btc_low,
+        &btc_close,
         window_size,
         bb_multiplier,
     );
-    // println!("{:?}", btc_pnl);
+
+    optimize_strategy(
+        &pi_open, &pi_high, &pi_low, &pi_close, &btc_open, &btc_high, &btc_low, &btc_close,
+    );
+    // let data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+    // let cum_sum_data = calculate_cumulative_sum(&data);
+    // println!("{:?}", cum_sum_data);
+
     let btc_pnl_cum_sum: Vec<f64> = calculate_cumulative_sum(&btc_pnl);
     let mut plot = Plot::new();
     let trace = Scatter::new(count, btc_pnl_cum_sum);
@@ -173,7 +179,7 @@ fn calculate_rolling_mean(data: &[f64], window_size: usize) -> Vec<f64> {
         .map(|window| mean(window))
         .collect();
     for i in 0..(window_size - 1) {
-        rolling_mean.insert(i, std::f64::NAN);
+        rolling_mean.insert(i, f64::NAN);
     }
     rolling_mean
 }
@@ -184,7 +190,7 @@ fn calculate_rolling_std(data: &[f64], window_size: usize) -> Vec<f64> {
         .map(|window| variance(window).sqrt())
         .collect();
     for i in 0..(window_size - 1) {
-        rolling_std.insert(i, std::f64::NAN);
+        rolling_std.insert(i, f64::NAN);
     }
     rolling_std
 }
@@ -199,39 +205,44 @@ fn calculate_cumulative_sum(numbers: &[f64]) -> Vec<f64> {
         .collect()
 }
 
-fn strategy_test(
-    _pi_open: Vec<f64>,
-    pi_high: Vec<f64>,
-    pi_low: Vec<f64>,
-    _pi_close: Vec<f64>,
-    _btc_open: Vec<f64>,
-    _btc_high: Vec<f64>,
-    _btc_low: Vec<f64>,
-    _btc_close: Vec<f64>,
-    window_size: usize,
-    bb_multiplier: f64,
-) -> Vec<f64> {
-    let pi_higher: Vec<f64> = calculate_rolling_mean(&pi_high, window_size)
-        .iter()
-        .zip(calculate_rolling_std(&pi_high, window_size).iter())
-        .map(|(&mean, &std)| mean + bb_multiplier * std)
-        .collect();
+fn optimize_strategy(
+    pi_open: &Vec<f64>,
+    pi_high: &Vec<f64>,
+    pi_low: &Vec<f64>,
+    pi_close: &Vec<f64>,
+    btc_open: &Vec<f64>,
+    btc_high: &Vec<f64>,
+    btc_low: &Vec<f64>,
+    btc_close: &Vec<f64>,
+) {
+    let mut period_range: Vec<i64> = vec![];
+    let mut bb_range: Vec<f64> = vec![];
+    for i in (50..=300).step_by(5) {
+        period_range.push(i as i64);
+    }
 
-    let pi_lower: Vec<f64> = calculate_rolling_mean(&pi_low, window_size)
-        .iter()
-        .zip(calculate_rolling_std(&pi_low, window_size).iter())
-        .map(|(&mean, &std)| mean + bb_multiplier * std)
-        .collect();
+    for i in 0..36 {
+        bb_range.push((i as f64) * 0.1);
+    }
 
-    let btc_mid_line: Vec<f64> = pi_higher
-        .iter()
-        .zip(pi_lower.iter())
-        .map(|(&a, &b)| (a + b) / 2.0)
-        .collect();
-
-    let roll_mean: Vec<f64> = calculate_rolling_mean(&pi_high, 100);
-
-    println!("{}", pi_higher.len());
-    println!("{}", roll_mean.len());
-    btc_mid_line
+    for period in period_range {
+        for bb_multipler in &bb_range {
+            let _result: Vec<f64> = strategy(
+                &pi_open,
+                &pi_high,
+                &pi_low,
+                &pi_close,
+                &btc_open,
+                &btc_high,
+                &btc_low,
+                &btc_close,
+                period as usize,
+                *bb_multipler,
+            );
+            println!(
+                "Parameter ussed window_size{} bb_multiplier{}",
+                period, *bb_multipler
+            );
+        }
+    }
 }

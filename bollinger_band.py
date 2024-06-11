@@ -83,25 +83,25 @@ def pi_1h_strategy(btc_data, pi_data, period, bb_multiplier):
         ):
             BTC_Position[i] = 0  # Flat Short signal
 
-        # # Signal with exits
-        # if BTC_Entry_Signal[i] == -1:
-        #     BTC_Signal_with_exits[i] = BTC_Entry_Signal[i]
-        # elif BTC_Entry_Signal[i] == 1:
-        #     BTC_Signal_with_exits[i] = BTC_Entry_Signal[i]
-        # elif (
-        #     BTC_Entry_Signal[i] == 0
-        #     and BTC_Position[i - 1] == -1
-        #     and BTC_Position[i] == 0  # Flat short pos
-        # ):
-        #     BTC_Signal_with_exits[i] = 1
-        # elif (
-        #     BTC_Entry_Signal[i] == 0
-        #     and BTC_Position[i - 1] == 1
-        #     and BTC_Position[i] == 0  # Flat long pos
-        # ):
-        #     BTC_Signal_with_exits[i] = -1
-        # else:
-        #     BTC_Signal_with_exits[i] = 0
+        # Signal with exits
+        if BTC_Entry_Signal[i] == -1:
+            BTC_Signal_with_exits[i] = BTC_Entry_Signal[i]
+        elif BTC_Entry_Signal[i] == 1:
+            BTC_Signal_with_exits[i] = BTC_Entry_Signal[i]
+        elif (
+            BTC_Entry_Signal[i] == 0
+            and BTC_Position[i - 1] == -1
+            and BTC_Position[i] == 0  # Flat short pos
+        ):
+            BTC_Signal_with_exits[i] = 1
+        elif (
+            BTC_Entry_Signal[i] == 0
+            and BTC_Position[i - 1] == 1
+            and BTC_Position[i] == 0  # Flat long pos
+        ):
+            BTC_Signal_with_exits[i] = -1
+        else:
+            BTC_Signal_with_exits[i] = 0
 
         # Calculate P&L
         if BTC_Position[i] == -1:
